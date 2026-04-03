@@ -1,0 +1,61 @@
+﻿{% extends "layout.html" %}
+{% block body %}
+<!-- 🔙 返回按钮 -->
+<div class="mt-3">
+    <button onclick="history.back()" class="btn btn-outline-secondary">
+        ←
+    </button>
+</div>
+
+<h3 class="text-center mt-3">🛠 관리자 페이지</h3>
+
+<form class="d-flex mt-3" method="get">
+    <input class="form-control" name="q" placeholder="아이디 검색" value="{{ q }}">
+    <button class="btn btn-primary ms-2">검색</button>
+</form>
+
+<a href="/admin/add" class="btn btn-success mt-3">관리자 추가</a>
+
+<table class="table table-hover mt-3">
+    <tr>
+        <th>ID</th>
+        <th>아이디</th>
+        <th>관리자 여부</th>
+        <th>설정</th>
+    </tr>
+
+    {% for u in users %}
+    <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ "예" if u.is_admin else "아니오" }}</td>
+        <td>
+            {% if u.is_admin %}
+                <button class="btn btn-warning btn-sm toggle" data-id="{{ u.id }}">관리자 취소</button>
+            {% else %}
+                <button class="btn btn-success btn-sm toggle" data-id="{{ u.id }}">관리자로 설정</button>
+            {% endif %}
+            <button class="btn btn-danger btn-sm delete" data-id="{{ u.id }}">삭제</button>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+document.querySelectorAll(".toggle").forEach(btn => {
+    btn.onclick = () => {
+        fetch(`/admin/users/${btn.dataset.id}/toggle_admin`, {method:"POST"})
+        .then(r=>location.reload());
+    };
+});
+
+document.querySelectorAll(".delete").forEach(btn => {
+    btn.onclick = () => {
+        if (!confirm("정말 삭제하시겠습니까?")) return;
+        fetch(`/admin/users/${btn.dataset.id}/delete`, {method:"POST"})
+        .then(r=>location.reload());
+    };
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,286 @@
+{% extends "layout.html" %}
+{% block title %}📊 통계 페이지{% endblock %}
+{% block body %}
+
+<style>
+    .stats-page-title {
+        text-align: center;
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
+
+    .stats-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .stats-card .card-body {
+        padding: 28px 20px;
+    }
+
+    .stats-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-top: 8px;
+        margin-bottom: 0;
+    }
+
+    .chart-section {
+        margin-top: 50px;
+        padding: 28px 24px;
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+
+    .chart-title {
+        text-align: center;
+        font-weight: 700;
+        margin-bottom: 22px;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 420px;
+    }
+
+    .empty-note {
+        text-align: center;
+        color: #888;
+        font-size: 0.95rem;
+        margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+        .chart-wrapper {
+            height: 300px;
+        }
+
+        .stats-number {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+
+<div class="container py-4">
+    <h2 class="stats-page-title">📊 분실물 / 습득물 통계</h2>
+
+    <div class="row g-4">
+        <!-- 총 분실물 -->
+        <div class="col-md-6">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <h5>📦 총 분실물</h5>
+                    <p class="stats-number text-primary">{{ lost_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 총 습득물 -->
+        <div class="col-md-6">
+            <div class="card stats-card text-center">
+                <div class="card-body">
+                    <h5>📥 총 습득물</h5>
+                    <p class="stats-number text-success">{{ found_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리별 통계 -->
+    <div class="chart-section">
+        <h4 class="chart-title">📌 카테고리별 분실/습득 통계</h4>
+        <div class="chart-wrapper">
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <div id="categoryEmpty" class="empty-note" style="display:none;">
+            표시할 카테고리 데이터가 없습니다.
+        </div>
+    </div>
+
+    <!-- 장소별 통계 -->
+    <div class="chart-section">
+        <h4 class="chart-title">📍 장소별 분실/습득 통계</h4>
+        <div class="chart-wrapper">
+            <canvas id="locationChart"></canvas>
+        </div>
+        <div id="locationEmpty" class="empty-note" style="display:none;">
+            표시할 장소 데이터가 없습니다.
+        </div>
+    </div>
+
+    <!-- Top5 -->
+    <div class="chart-section">
+        <h4 class="chart-title">🔥 가장 많이 잃어버린 물건 Top 5</h4>
+        <div class="chart-wrapper">
+            <canvas id="topLostChart"></canvas>
+        </div>
+        <div id="topEmpty" class="empty-note" style="display:none;">
+            표시할 Top 5 데이터가 없습니다.
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Jinja 数据
+    const lost_labels = {{ lost_labels | tojson }};
+    const lost_values = {{ lost_values | tojson }};
+    const found_values = {{ found_values | tojson }};
+    const locationStats = {{ location_stats | tojson }};
+    const top_labels = {{ top_lost_labels | tojson }};
+    const top_values = {{ top_lost_values | tojson }};
+
+    // 通用图表配置
+    function commonOptions(titleText) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 18,
+                        padding: 14,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                title: {
+                    display: false,
+                    text: titleText
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.75)',
+                    padding: 10
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        stepSize: 1
+                    }
+                }
+            }
+        };
+    }
+
+    // 分类图
+    const hasCategoryData = lost_labels.length > 0;
+
+    if (hasCategoryData) {
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'bar',
+            data: {
+                labels: lost_labels,
+                datasets: [
+                    {
+                        label: '분실물',
+                        data: lost_values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.75)',
+                        borderRadius: 8,
+                        borderSkipped: false
+                    },
+                    {
+                        label: '습득물',
+                        data: found_values,
+                        backgroundColor: 'rgba(75, 192, 192, 0.75)',
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }
+                ]
+            },
+            options: commonOptions('카테고리별 통계')
+        });
+    } else {
+        document.getElementById('categoryChart').style.display = 'none';
+        document.getElementById('categoryEmpty').style.display = 'block';
+    }
+
+    // 地点图
+    const locationLabels = Object.keys(locationStats || {});
+    const locationLost = locationLabels.map(k => locationStats[k].lost || 0);
+    const locationFound = locationLabels.map(k => locationStats[k].found || 0);
+    const hasLocationData = locationLabels.length > 0;
+
+    if (hasLocationData) {
+        new Chart(document.getElementById('locationChart'), {
+            type: 'bar',
+            data: {
+                labels: locationLabels,
+                datasets: [
+                    {
+                        label: '분실물',
+                        data: locationLost,
+                        backgroundColor: 'rgba(255, 99, 132, 0.75)',
+                        borderRadius: 8,
+                        borderSkipped: false
+                    },
+                    {
+                        label: '습득물',
+                        data: locationFound,
+                        backgroundColor: 'rgba(255, 206, 86, 0.8)',
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }
+                ]
+            },
+            options: commonOptions('장소별 통계')
+        });
+    } else {
+        document.getElementById('locationChart').style.display = 'none';
+        document.getElementById('locationEmpty').style.display = 'block';
+    }
+
+    // Top5 图
+    const hasTopData = top_labels.length > 0;
+
+    if (hasTopData) {
+        new Chart(document.getElementById('topLostChart'), {
+            type: 'bar',
+            data: {
+                labels: top_labels,
+                datasets: [
+                    {
+                        label: 'Top 5 분실물',
+                        data: top_values,
+                        backgroundColor: 'rgba(153, 102, 255, 0.78)',
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }
+                ]
+            },
+            options: commonOptions('Top 5 분실물')
+        });
+    } else {
+        document.getElementById('topLostChart').style.display = 'none';
+        document.getElementById('topEmpty').style.display = 'block';
+    }
+</script>
+
+{% endblock %}

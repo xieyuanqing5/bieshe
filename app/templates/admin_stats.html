@@ -1,0 +1,63 @@
+﻿{% extends "layout.html" %}
+{% block body %}
+
+<h3 class="text-center mb-4">📊 통계 대시보드</h3>
+
+<div class="row text-center">
+
+    <div class="col-md-4 mb-3">
+        <div class="card p-3 shadow">
+            <h5>총 사용자 수</h5>
+            <h2 class="text-primary">{{ total_users }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card p-3 shadow">
+            <h5>총 분실물</h5>
+            <h2 class="text-warning">{{ total_lost }}</h2>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card p-3 shadow">
+            <h5>총 습득물</h5>
+            <h2 class="text-success">{{ total_found }}</h2>
+        </div>
+    </div>
+
+</div>
+
+<h4 class="mt-5">📌 최근 등록된 분실물</h4>
+<table class="table">
+    <tr>
+        <th>ID</th>
+        <th>제목</th>
+        <th>작성자</th>
+        <th>등록일</th>
+    </tr>
+    {% for item in recent_lost %}
+    <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.title }}</td>
+        <td>{{ item.user.username }}</td>
+        <td>{{ item.date }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h4 class="mt-5">🆕 최근 가입 사용자</h4>
+<table class="table">
+    <tr>
+        <th>ID</th>
+        <th>아이디</th>
+    </tr>
+    {% for u in recent_users %}
+    <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "layout.html" %}
+{% block title %}🔍 검색하기{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+
+    <h2 class="text-center fw-bold mb-4">🔍 분실물 / 습득물 검색</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('views.search') }}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">검색 키워드</label>
+                        <input type="text" name="keyword" class="form-control" value="{{ request.args.get('keyword', '') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">카테고리</label>
+                        <select name="category" class="form-select">
+                            <option value="">전체</option>
+                            {% for c in categories %}
+                                <option value="{{ c }}" {% if request.args.get('category') == c %}selected{% endif %}>{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">장소</label>
+                        <input type="text" name="place" class="form-control" value="{{ request.args.get('place', '') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">날짜</label>
+                        <input type="date" name="date" class="form-control" value="{{ request.args.get('date', '') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">상태</label>
+                        <select name="status" class="form-select">
+                            <option value="">전체</option>
+                            <option value="resolved" {% if request.args.get('status') == 'resolved' %}selected{% endif %}>해결</option>
+                            <option value="unresolved" {% if request.args.get('status') == 'unresolved' %}selected{% endif %}>미해결</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-9 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">🔎 검색하기</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <h4 class="fw-bold mb-3">📋 검색 결과 (총 {{ results|length }}건)</h4>
+
+    <div class="row g-4">
+        {% for item in results %}
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                {% if item.image %}
+                    <img src="{{ item.image }}" class="card-img-top" style="height: 220px; object-fit: cover;" alt="item image">
+                {% endif %}
+
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-center flex-wrap gap-2 mb-2">
+                        <h5 class="fw-bold mb-0">{{ item.name }}</h5>
+
+                        {% if item.type == "lost" %}
+                            <span class="badge bg-danger">분실</span>
+                        {% else %}
+                            <span class="badge bg-success">습득</span>
+                        {% endif %}
+
+                        {% if item.resolved %}
+                            <span class="badge bg-success">해결</span>
+                        {% else %}
+                            <span class="badge bg-danger">미해결</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-muted small mb-1">📍 {{ item.place }}</div>
+                    <div class="text-muted small mb-1">🗓 {{ item.date }}</div>
+                    <div class="text-muted small mb-3">🏷 {{ item.category }}</div>
+
+                    <div class="mt-auto">
+                        <a href="/item/{{ item.type }}/{{ item.id }}" class="btn btn-outline-primary w-100">
+                            상세보기
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

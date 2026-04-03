@@ -1,0 +1,65 @@
+﻿{% extends "layout.html" %}
+{% block title %}✏ 물품 수정{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+    <h2 class="text-center fw-bold mb-4">✏ 분실물 / 습득물 수정</h2>
+
+    <div class="card shadow-sm mx-auto" style="max-width: 800px;">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">물품명</label>
+                    <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">카테고리</label>
+                    <input type="text" name="category" class="form-control" value="{{ item.category }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">장소</label>
+                    <input type="text" name="place" class="form-control" value="{{ item.place }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">날짜</label>
+                    <input type="date" name="date" class="form-control" value="{{ item.date }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">연락처</label>
+                    <input type="text" name="contact" class="form-control" value="{{ item.contact }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">설명</label>
+                    <textarea name="description" class="form-control" rows="4">{{ item.description }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">이미지 업로드</label>
+                    <input type="file" name="image" class="form-control">
+                </div>
+
+                {% if item.image %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">현재 이미지</label><br>
+                    <img src="{{ item.image }}" alt="current image" class="img-fluid rounded" style="max-height: 250px;">
+                </div>
+                {% endif %}
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-warning flex-grow-1">💾 수정 완료</button>
+
+                    <a href="{{ url_for('views.item_detail', item_type=item_type, item_id=item.id, source=source) if source else url_for('views.item_detail', item_type=item_type, item_id=item.id) }}"
+                       class="btn btn-secondary">
+                        🔙 취소
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+﻿{% extends "base.html" %}
+
+{% block title %}관리자 대시보드{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="fw-bold mb-4">🛠 관리자 대시보드</h2>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">총 사용자</h6>
+                    <h2 class="text-primary">{{ total_users }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">총 분실물</h6>
+                    <h2 class="text-danger">{{ total_lost }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">총 습득물</h6>
+                    <h2 class="text-success">{{ total_found }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h6 class="text-muted">문의 수</h6>
+                    <h2 class="text-warning">{{ total_feedback }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h4 class="fw-bold mb-3">빠른 이동</h4>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary me-2 mb-2">사용자 관리</a>
+            <a href="{{ url_for('admin.items') }}" class="btn btn-outline-success me-2 mb-2">물품 관리</a>
+            <a href="{{ url_for('admin.stats') }}" class="btn btn-outline-dark mb-2">관리자 통계</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">최근 가입 사용자</h5>
+                    {% if recent_users %}
+                        <ul class="list-group">
+                            {% for user in recent_users %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ user.username }}
+                                {% if user.is_admin %}
+                                <span class="badge bg-warning text-dark">Admin</span>
+                                {% else %}
+                                <span class="badge bg-secondary">User</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted mb-0">사용자가 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">최근 문의</h5>
+                    {% if recent_feedback %}
+                        <ul class="list-group">
+                            {% for fb in recent_feedback %}
+                            <li class="list-group-item">
+                                <div class="fw-bold">{{ fb.name or '익명' }}</div>
+                                <div class="text-muted small">{{ fb.message }}</div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted mb-0">문의가 없습니다.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

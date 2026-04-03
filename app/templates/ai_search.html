@@ -1,0 +1,301 @@
+﻿{% extends "layout.html" %}
+{% block title %}🤖 AI 분실물 도우미{% endblock %}
+
+{% block body %}
+<div class="container py-4">
+
+    <h2 class="fw-bold text-center mb-4">🤖 AI 분실물 도우미</h2>
+
+    <!-- AI 질문 -->
+    <div class="card shadow-sm p-3 mb-4">
+        <form method="POST" action="{{ url_for('views.ai_page') }}">
+            <textarea
+                name="question"
+                class="form-control mb-3"
+                rows="3"
+                placeholder="AI에게 질문하세요..."
+            >{{ request.form.get('question', '') }}</textarea>
+
+            <button type="submit" class="btn btn-primary w-100">
+                🤖 AI 검색
+            </button>
+        </form>
+    </div>
+
+    {% if ai_answer %}
+    <div class="alert alert-info mb-4">
+        {{ ai_answer }}
+    </div>
+    {% endif %}
+
+    <!-- AI 자동 매칭 -->
+    <div class="card shadow-sm p-3">
+        <h5 class="fw-bold mb-3">🔍 AI 자동 매칭 (등록된 분실물/습득물)</h5>
+
+        <textarea
+            id="desc"
+            class="form-control mt-2"
+            rows="3"
+            placeholder="예: 2026.03.15일에 카페에서 빨간색 지갑을 잃어버렸어요."
+        ></textarea>
+
+        <button type="button" onclick="aiMatch()" class="btn btn-success w-100 mt-3">
+            🤖 AI 자동 매칭 실행
+        </button>
+
+        <div id="match_result" class="mt-4"></div>
+    </div>
+
+</div>
+
+<style>
+.top-match-card {
+    background-color: #eafaf0 !important;
+    border: 2px solid #28a745 !important;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.18);
+}
+
+.candidate-card {
+    background-color: #eef7ff !important;
+    border: 1px solid #b6dbff !important;
+}
+
+.top-match-badge {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.candidate-badge {
+    display: inline-block;
+    background-color: #0d6efd;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.score-box {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    border: 1px solid #dee2e6;
+}
+
+.reason-box {
+    background-color: #fffdf2;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    border: 1px solid #f3df9b;
+}
+
+.debug-box {
+    background-color: #fdfdfd;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    border: 1px dashed #ced4da;
+}
+
+.match-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+</style>
+
+<script>
+function buildReasonText(item) {
+    const score = Number(item.score || 0);
+    const detail = item.score_detail || {};
+    const place = Number(detail.place || 0);
+    const date = Number(detail.date || 0);
+    const name = Number(detail.name || 0);
+    const desc = Number(detail.description || 0);
+
+    let reasons = [];
+
+    if (place >= 0.8) {
+        reasons.push("장소가 매우 유사합니다");
+    } else if (place >= 0.4) {
+        reasons.push("장소가 어느 정도 유사합니다");
+    }
+
+    if (date >= 1.0) {
+        reasons.push("날짜가 정확히 일치합니다");
+    } else if (date >= 0.4) {
+        reasons.push("날짜가 근접합니다");
+    }
+
+    if (name >= 0.75) {
+        reasons.push("물품명이 매우 유사합니다");
+    } else if (name >= 0.4) {
+        reasons.push("물품명이 부분적으로 유사합니다");
+    }
+
+    if (desc >= 0.75) {
+        reasons.push("설명 내용이 매우 유사합니다");
+    } else if (desc >= 0.4) {
+        reasons.push("설명 내용이 어느 정도 유사합니다");
+    }
+
+    if (reasons.length === 0) {
+        if (score >= 0.6) {
+            return "여러 항목이 종합적으로 유사하여 높은 점수를 받았습니다.";
+        } else if (score >= 0.35) {
+            return "일부 항목이 유사하여 후보 결과로 분류되었습니다.";
+        } else {
+            return "유사도가 낮아 참고용 후보 결과입니다.";
+        }
+    }
+
+    if (score >= 0.6) {
+        return reasons.join(", ") + " → 가장 유력한 결과입니다.";
+    } else if (score >= 0.35) {
+        return reasons.join(", ") + " → 후보 결과로 참고할 수 있습니다.";
+    } else {
+        return reasons.join(", ") + " → 유사도는 낮지만 참고용으로 표시됩니다.";
+    }
+}
+
+async function aiMatch() {
+    const text = document.getElementById("desc").value.trim();
+    const box = document.getElementById("match_result");
+
+    if (!text) {
+        alert("설명 내용을 입력해주세요.");
+        return;
+    }
+
+    box.innerHTML = `
+        <div class="alert alert-secondary">
+            AI가 매칭 결과를 분석하는 중입니다...
+        </div>
+    `;
+
+    try {
+        const res = await fetch("/ai/match", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ text: text })
+        });
+
+        const data = await res.json();
+        box.innerHTML = "";
+
+        if (!res.ok) {
+            box.innerHTML = `
+                <div class="alert alert-danger">
+                    오류가 발생했습니다: ${data.error || "알 수 없는 오류"}
+                </div>
+            `;
+            return;
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+            box.innerHTML = `
+                <div class="alert alert-warning">
+                    일치하는 결과가 없습니다.<br>
+                    장소, 날짜, 색상, 물품명을 조금 더 구체적으로 입력해 주세요.
+                </div>
+            `;
+            return;
+        }
+
+        data.forEach((item, index) => {
+            const detailUrl = `/item/${item.type}/${item.id}?source=ai`;
+            const isTopMatch = index === 0;
+            const score = Number(item.score || 0);
+            const scoreDetail = item.score_detail || {};
+            const debug = item.debug || {};
+            const reasonText = buildReasonText(item);
+
+            let badgeHtml = "";
+            let cardClass = "";
+
+            if (isTopMatch) {
+                badgeHtml = `<div class="top-match-badge">⭐ 가장 유력한 결과</div>`;
+                cardClass = "top-match-card";
+            } else {
+                if (score >= 0.35) {
+                    badgeHtml = `<div class="candidate-badge">후보 결과</div>`;
+                } else {
+                    badgeHtml = `<div class="candidate-badge">참고 후보</div>`;
+                }
+                cardClass = "candidate-card";
+            }
+
+            box.innerHTML += `
+                <div class="alert mb-4 ${cardClass}">
+                    ${badgeHtml}
+
+                    <div class="match-title-row mb-2">
+                        <div>
+                            <strong>⚡ 총점:</strong> <b>${score}</b>
+                        </div>
+                        <div class="text-muted">
+                            종류: ${item.type === "lost" ? "분실물" : "습득물"}
+                        </div>
+                    </div>
+
+                    <div>
+                        <strong>이름:</strong> ${item.name || "이름 없음"}<br>
+                        <strong>위치:</strong> ${item.place || "정보 없음"}<br>
+                        <strong>날짜:</strong> ${item.date || "정보 없음"}<br>
+                        <strong>설명:</strong> ${item.description || "설명 없음"}
+                    </div>
+
+                    <div class="reason-box">
+                        <strong>📝 매칭 이유</strong><br>
+                        ${reasonText}
+                    </div>
+
+                    <div class="score-box">
+                        <strong>📊 가중치 점수</strong><br>
+                        이름 점수 (30%): ${scoreDetail.name ?? 0}<br>
+                        장소 점수 (30%): ${scoreDetail.place ?? 0}<br>
+                        설명 점수 (30%): ${scoreDetail.description ?? 0}<br>
+                        날짜 점수 (10%): ${scoreDetail.date ?? 0}
+                    </div>
+
+                    <div class="debug-box">
+                        <strong>🧠 AI 추출 정보</strong><br>
+                        인식한 장소: ${debug.user_place || "없음"}<br>
+                        인식한 날짜: ${debug.user_date || "없음"}<br>
+                        인식한 색상: ${debug.user_color || "없음"}<br>
+                        인식한 물품 키워드: ${debug.user_item_word || "없음"}<br>
+                        정제된 키워드: ${debug.cleaned_text || "없음"}
+                    </div>
+
+                    <a href="${detailUrl}" class="btn btn-primary btn-sm mt-3">
+                        🔎 상세 보기
+                    </a>
+                </div>
+            `;
+        });
+
+    } catch (error) {
+        box.innerHTML = `
+            <div class="alert alert-danger">
+                서버와 통신 중 오류가 발생했습니다.
+            </div>
+        `;
+        console.error("AI Match Error:", error);
+    }
+}
+</script>
+
+{% endblock %}

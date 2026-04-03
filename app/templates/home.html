@@ -1,0 +1,119 @@
+﻿{% extends "layout.html" %}
+{% block title %}홈{% endblock %}
+{% block content %}
+
+<style>
+.card-title, .card-text {
+    word-break: break-word;
+}
+</style>
+
+<h2 class="text-center mb-4">📋 최근 등록된 분실물 & 습득물</h2>
+
+<div class="row">
+    {% if lost_items|length == 0 and found_items|length == 0 %}
+    <p class="text-center text-muted">등록된 데이터가 없습니다.</p>
+    {% endif %}
+
+    <!-- ======================
+         🔹 최근 분실물 카드
+         ====================== -->
+    {% for item in lost_items %}
+    <div class="col-12 col-md-6 col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+
+            <!-- 이미지 -->
+            {% if item.image %}
+            <img src="{{ url_for('static', filename='uploads/' + item.image) }}" 
+                 class="card-img-top"
+                 style="height: 180px; object-fit: cover;">
+            {% else %}
+            <img src="{{ url_for('static', filename='no_image.png') }}"
+                 class="card-img-top"
+                 style="height: 180px; object-fit: cover;">
+            {% endif %}
+
+            <!-- 내용 -->
+            <div class="card-body d-flex flex-column">
+
+                <h5 class="card-title text-primary">
+                    🔍 분실물
+
+                    <!-- ✅ 状态 -->
+                    {% if item.resolved %}
+                        <span class="badge bg-success ms-1">✔ 완료</span>
+                    {% else %}
+                        <span class="badge bg-danger ms-1">✖ 미해결</span>
+                    {% endif %}
+                </h5>
+
+                <p class="card-text">
+                    <strong>{{ item.name }}</strong><br>
+                    📍 {{ item.place }}<br>
+                    📅 {{ item.date }}<br>
+                    🏷 {{ item.category }}
+                </p>
+
+                <!-- 按钮固定底部 -->
+                <a href="/item/{{ item.id }}?type=lost"
+                   class="btn btn-outline-primary w-100 mt-auto">
+                    상세보기
+                </a>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- ======================
+         🔹 최근 습득물 카드
+         ====================== -->
+    {% for item in found_items %}
+    <div class="col-12 col-md-6 col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+
+            <!-- 图片 -->
+            {% if item.image %}
+            <img src="{{ url_for('static', filename='uploads/' + item.image) }}" 
+                 class="card-img-top"
+                 style="height: 180px; object-fit: cover;">
+            {% else %}
+            <img src="{{ url_for('static', filename='no_image.png') }}"
+                 class="card-img-top"
+                 style="height: 180px; object-fit: cover;">
+            {% endif %}
+
+            <!-- 内容 -->
+            <div class="card-body d-flex flex-column">
+
+                <h5 class="card-title text-success">
+                    📦 습득물
+
+                    <!-- ✅ 状态 -->
+                    {% if item.resolved %}
+                        <span class="badge bg-success ms-1">✔ 완료</span>
+                    {% else %}
+                        <span class="badge bg-danger ms-1">✖ 미해결</span>
+                    {% endif %}
+                </h5>
+
+                <p class="card-text">
+                    <strong>{{ item.name }}</strong><br>
+                    📍 {{ item.place }}<br>
+                    📅 {{ item.date }}<br>
+                    🏷 {{ item.category }}
+                </p>
+
+                <!-- 按钮固定底部 -->
+                <a href="/item/{{ item.id }}?type=found"
+                   class="btn btn-outline-success w-100 mt-auto">
+                    상세보기
+                </a>
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

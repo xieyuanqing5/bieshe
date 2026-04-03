@@ -1,0 +1,61 @@
+﻿{% extends "layout.html" %}
+{% block body %}
+<h3 class="text-center mb-3">🔐 로그인</h3>
+
+<form id="loginForm">
+    <label>아이디</label>
+    <input type="text" name="username" class="form-control">
+
+    <label>비밀번호</label>
+    <input type="password" name="password" class="form-control">
+
+    <button class="btn btn-primary mt-3 w-100">로그인</button>
+</form>
+<p class="text-center mt-3">
+    🔐 관리자이신가요?
+    <a href="/auth/admin/login" class="btn btn-outline-warning btn-sm ms-2">관리자 로그인</a>
+</p>
+
+
+<p id="msg" class="text-center mt-3 text-danger"></p>
+
+<p class="text-center mt-3">
+    계정이 없나요?
+    <a href="/auth/register">회원가입</a>
+</p>
+
+<script>
+document.getElementById("loginForm").addEventListener("submit", async function(e) {
+    e.preventDefault(); // 阻止提交
+
+    let data = {
+        username: this.username.value,
+        password: this.password.value
+    };
+
+    let res = await fetch("/auth/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+
+    let result = await res.json();
+
+    if (res.ok) {
+        window.location.href = "/";
+    } else {
+        document.getElementById("msg").innerText = result.error;
+    }
+});
+</script>
+<script>
+fetch("/auth/api/me")
+    .then(res => res.json())
+    .then(data => {
+        if (data.user) {
+            window.location.href = "/";
+        }
+    });
+</script>
+
+{% endblock %}

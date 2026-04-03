@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+
+{% block title %}📝 분실물 / 습득물 등록{% endblock %}
+
+{% block body %}
+
+<h3 class="text-center mb-4">📝 분실물 / 습득물 등록</h3>
+
+<div class="card shadow-sm mx-auto" style="max-width: 800px;">
+    <div class="card-body">
+
+        <form method="POST" action="/register" enctype="multipart/form-data">
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">등록 유형</label>
+                <select name="type" class="form-select" required>
+                    <option value="lost">🔴 분실물</option>
+                    <option value="found">🟢 습득물</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">물품 이름</label>
+                <input type="text" name="name"
+                       class="form-control" required
+                       placeholder="예: 검정색 지갑">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">카테고리</label>
+                <select name="category" class="form-select">
+                    <option value="">선택하기</option>
+                    {% for c in categories %}
+                        <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">장소</label>
+                <input type="text" name="place"
+                       class="form-control" required
+                       placeholder="예: 도서관 3층, 강의실 501">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">날짜</label>
+                <input type="date" name="date" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">연락처</label>
+                <input type="text" name="contact"
+                       class="form-control"
+                       placeholder="예: 010-1234-5678">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">설명</label>
+                <textarea name="description"
+                          class="form-control" rows="3"
+                          placeholder="물품의 특징을 입력하세요"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">이미지 업로드</label>
+                <input type="file" name="image" class="form-control">
+                <small class="text-muted">이미지는 선택 사항입니다.</small>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit"
+                        class="btn btn-primary px-4 py-2 w-100">
+                    📌 등록하기
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

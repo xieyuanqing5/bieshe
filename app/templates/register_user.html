@@ -1,0 +1,56 @@
+﻿{% extends "layout.html" %}
+{% block title %} 회원가입 {% endblock %}
+{% block body %}
+
+<script>
+// 🔹 如果已登录 → 自动跳转首页
+fetch("/auth/api/me")
+    .then(res => res.json())
+    .then(data => {
+        if (data.user) {
+            window.location.href = "/";
+        }
+    });
+</script>
+
+<h3 class="text-center mb-3">📝 회원가입</h3>
+
+<form id="registerForm">
+    <label>아이디</label>
+    <input type="text" name="username" class="form-control" required>
+
+    <label class="mt-2">비밀번호</label>
+    <input type="password" name="password" class="form-control" required>
+
+    <button class="btn btn-success mt-3 w-100">회원가입</button>
+</form>
+
+<p id="msg" class="text-center mt-3 text-danger"></p>
+
+<p class="text-center mt-3">
+    이미 계정이 있나요?
+    <a href="/auth/login">로그인</a>
+</p>
+
+<script>
+document.getElementById("registerForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    let data = {
+        username: this.username.value,
+        password: this.password.value
+    };
+    let res = await fetch("/auth/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+    let result = await res.json();
+    if (res.ok) {
+        alert("회원가입 성공! 로그인 페이지로 이동합니다.");
+        window.location.href = "/auth/login";
+    } else {
+        document.getElementById("msg").innerText = result.error;
+    }
+});
+</script>
+{% endblock %}
